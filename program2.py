@@ -11,8 +11,8 @@ from datetime import datetime
 
 # Параметры
 IMAGE_SIZE = (64, 100)
-BATCH_SIZE = 2
-EPOCHS = 250 #118
+BATCH_SIZE = 2 #16
+EPOCHS = 250 #20
 LEARNING_RATE = 0.00002
 MODEL_PATH = "model/checkpoint"
 FORWARD_INPUT = "forwardinput"

@@ -8,13 +8,17 @@ from torch.utils.data import DataLoader
 from PIL import Image
 import matplotlib.pyplot as plt
 from datetime import datetime
-
+#pip install pillow matplotlib
+#CPU! pip install torch torchvision pillow matplotlib
+#pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
 # Параметры
-IMAGE_SIZE = (64, 100)
-BATCH_SIZE = 2 #16
-EPOCHS = 250 #20
+#IMAGE_SIZE = (480, 640)
+IMAGE_SIZE = (128, 280)
+BATCH_SIZE = 16 #4
+EPOCHS = 20 #280
 LEARNING_RATE = 0.00002
 MODEL_PATH = "model/checkpoint"
+MODEL_PATH_CLF = "model/checkpoint_19"
 FORWARD_INPUT = "forwardinput"
 OUTPUT_GOAL = "outputgoal"
 OUTPUT_OTHER = "outputother"
@@ -22,7 +26,7 @@ TRAIN_GOAL = "traingoal"
 TRAIN_OTHER = "trainother"
 TRAIN_FOLDER = "train"
 TEST_FOLDER = "test"
-
+DEVICE = torch.device("cuda")
 
 def create_dirs():
     os.makedirs(OUTPUT_GOAL, exist_ok=True)
@@ -30,7 +34,7 @@ def create_dirs():
     os.makedirs(TEST_FOLDER, exist_ok=True)
 
 
-def get_data_loader(train=True):
+def get_data_loader():
     transform = transforms.Compose([
         transforms.Resize(IMAGE_SIZE),
         transforms.ToTensor(),
@@ -53,7 +57,7 @@ class SimpleCNN(nn.Module):
 
 
 def train_model():
-    device = torch.device("cpu")
+    device = DEVICE
     model = SimpleCNN().to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
@@ -64,7 +68,7 @@ def train_model():
     plt.xlabel('Эпоха')
     plt.ylabel('Total Loss')
     test()
-
+    ne=0
     for epoch in range(EPOCHS):
         total_loss = 0
         for images, labels in dataloader:
@@ -77,21 +81,23 @@ def train_model():
             total_loss += loss.item()
         print(f"Epoch [{epoch + 1}/{EPOCHS}], Loss: {total_loss / len(dataloader):.4f}")
         losslist.append(total_loss)
+        torch.save(model.state_dict(), MODEL_PATH + '_' + str(ne))
+        ne=ne+1
     torch.save(model.state_dict(), MODEL_PATH)
     plt.plot( losslist, 'r-o')
     plt.savefig(f"{TEST_FOLDER}/Epochs_{EPOCHS}_LR_{LEARNING_RATE}.jpg")
     plt.show()
 
 def classify_images():
-    device = torch.device("cpu")
+    device = DEVICE
     model = SimpleCNN().to(device)
-    model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
+    model.load_state_dict(torch.load(MODEL_PATH_CLF, map_location=device))
     model.eval()
     transform = transforms.Compose([
         transforms.Resize(IMAGE_SIZE),
         transforms.ToTensor(),
     ])
-    test()
+    #test()
     for filename in os.listdir(FORWARD_INPUT):
         filepath = os.path.join(FORWARD_INPUT, filename)
         image = Image.open(filepath).convert("RGB")
